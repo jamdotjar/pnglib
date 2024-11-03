@@ -1,6 +1,8 @@
+#![allow(unused)]
 use std::{error::Error, fmt::Display, u32};
 
 use crate::chunk_type::ChunkType;
+pub const CRC_PNG: crc::Crc<u32> = crc::Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
 
 #[derive(Debug)]
 pub struct Chunk {
@@ -25,30 +27,30 @@ impl std::error::Error for ChunkError {}
 impl Chunk {
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
         let data_length = data.len() as u32;
-        let crc: u32 = 4;
-        let chunk_data = data_length
-            .to_be_bytes()
+
+        let chunk_data = data;
+        let crc_data: Vec<u8> = chunk_type
+            .bytes
             .iter()
-            .chain(chunk_type.bytes.iter())
-            .chain(data.iter())
-            .chain(crc.to_be_bytes().iter())
-            .copied()
+            .cloned()
+            .chain(chunk_data.iter().cloned())
             .collect();
+        let crc = CRC_PNG.checksum(&crc_data);
 
         Chunk {
-            data_length: data.len() as u32,
+            data_length,
             chunk_type,
-            crc: u32::MAX,
+            crc,
             chunk_data,
         }
     }
 
     pub fn length(&self) -> u32 {
-        todo!()
+        self.data_length
     }
 
     pub fn chunk_type(&self) -> &ChunkType {
-        todo!()
+        &self.chunk_type
     }
 
     pub fn data(&self) -> &[u8] {
@@ -63,12 +65,14 @@ impl Chunk {
             .cloned()
             .chain(self.chunk_data.iter().cloned())
             .collect();
-        let crc32 = crc::Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
-        crc32.checksum(&data)
+        CRC_PNG.checksum(&data)
     }
 
     pub fn data_as_string(&self) -> Result<String, String> {
-        todo!()
+        match String::from_utf8(self.chunk_data.clone()) {
+            Ok(str) => Ok(str.to_owned()),
+            Err(_) => Err("could not read chunk data".to_string()),
+        }
     }
 
     /// Returns this chunk as a byte sequences described by the PNG spec.
@@ -78,10 +82,16 @@ impl Chunk {
     /// 3. The data itself *(`length` bytes)*
     /// 4. The CRC of the chunk type and data *(4 bytes)*
     pub fn as_bytes(&self) -> Vec<u8> {
-        todo!()
+        let data: Vec<u8> = u32::to_be_bytes(self.data_length)
+            .iter()
+            .cloned()
+            .chain(self.chunk_type.bytes.iter().cloned())
+            .chain(self.chunk_data.iter().cloned())
+            .chain(u32::to_be_bytes(self.crc).iter().cloned())
+            .collect();
+        data
     }
 }
-
 
 impl TryFrom<&[u8]> for Chunk {
     type Error = ChunkError;
@@ -99,24 +109,29 @@ impl TryFrom<&[u8]> for Chunk {
             return Err(ChunkError::InvalidLength);
         }
 
-        let (chunk_type, bytes) = bytes.split_at(4);
+        let (ctype, bytes) = bytes.split_at(4);
         let (data, crc) = bytes.split_at(data_length as usize);
         let crc = crc.get(..4).ok_or(ChunkError::InvalidCrc)?;
 
-        let chunk_type_bytes: [u8; 4] = chunk_type
-            .try_into()
-            .map_err(|_| ChunkError::InvalidChunkType)?;
+        let chunk_type_bytes: [u8; 4] =
+            ctype.try_into().map_err(|_| ChunkError::InvalidChunkType)?;
         let chunk_type =
             ChunkType::try_from(chunk_type_bytes).map_err(|_| ChunkError::InvalidChunkType)?;
 
-        let crc = u32::from_be_bytes(crc.try_into().map_err(|_| ChunkError::InvalidCrc)?);
+        let crc_old = u32::from_be_bytes(crc.try_into().map_err(|_| ChunkError::InvalidCrc)?);
 
-        Ok(Chunk {
-            data_length,
-            chunk_type,
-            crc,
-            chunk_data: data.to_vec(),
-        })
+        let crc_data: Vec<u8> = (ctype.iter().cloned().chain(data.iter().cloned()).collect());
+        let crc = CRC_PNG.checksum(&crc_data);
+        if crc_old == crc {
+            Ok(Chunk {
+                data_length,
+                chunk_type,
+                crc,
+                chunk_data: data.to_vec(),
+            })
+        } else {
+            Err(ChunkError::InvalidCrc)
+        }
     }
 }
 
