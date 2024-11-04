@@ -1,8 +1,8 @@
 #![allow(unused_variables)]
-use std::str::FromStr;
 use std::fmt::Display;
+use std::str::FromStr;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ChunkType {
     pub bytes: [u8; 4],
 }
@@ -14,7 +14,7 @@ impl ChunkType {
                 return false;
             }
         }
-        if self.bytes[2].is_ascii_lowercase(){
+        if self.bytes[2].is_ascii_lowercase() {
             return false;
         }
         true
@@ -54,11 +54,14 @@ impl FromStr for ChunkType {
         }
         Ok(ChunkType { bytes })
     }
-   
 }
 impl Display for ChunkType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", std::str::from_utf8(&self.bytes).map_err(|_| std::fmt::Error)?)
+        write!(
+            f,
+            "{}",
+            std::str::from_utf8(&self.bytes).map_err(|_| std::fmt::Error)?
+        )
     }
 }
 
@@ -75,7 +78,6 @@ impl TryFrom<[u8; 4]> for ChunkType {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,7 +85,8 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    pub fn test_chunk_type_from_bytes() { //
+    pub fn test_chunk_type_from_bytes() {
+        //
         let expected = [82, 117, 83, 116];
         let actual = ChunkType::try_from([82, 117, 83, 116]).unwrap();
 
@@ -91,14 +94,15 @@ mod tests {
     }
 
     #[test]
-    pub fn test_chunk_type_from_str() { //
+    pub fn test_chunk_type_from_str() {
+        //
         let expected = ChunkType::try_from([82, 117, 83, 116]).unwrap();
         let actual = ChunkType::from_str("RuSt").unwrap();
         assert_eq!(expected, actual);
     }
 
     #[test]
-    pub fn test_chunk_type_is_critical() { 
+    pub fn test_chunk_type_is_critical() {
         let chunk = ChunkType::from_str("RuSt").unwrap();
         assert!(chunk.is_critical());
     }
@@ -174,4 +178,3 @@ mod tests {
         let _are_chunks_equal = chunk_type_1 == chunk_type_2;
     }
 }
-

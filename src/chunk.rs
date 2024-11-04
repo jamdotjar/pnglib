@@ -4,7 +4,7 @@ use std::{error::Error, fmt::Display, u32};
 use crate::chunk_type::ChunkType;
 pub const CRC_PNG: crc::Crc<u32> = crc::Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chunk {
     data_length: u32,
     chunk_type: ChunkType,
@@ -137,7 +137,11 @@ impl TryFrom<&[u8]> for Chunk {
 
 impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{:?}", self);
+        writeln!(
+            f,
+            "Chunk with length: {}, type: {}, data: {:?}, crc: {}",
+            self.data_length, self.chunk_type, self.chunk_data, self.crc
+        );
         Ok(())
     }
 }
