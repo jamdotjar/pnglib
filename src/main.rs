@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use pngme::{commands::encode, commands::decode, Error};
+use pngme::{commands::*, Error};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -31,30 +31,29 @@ pub struct DecodeArgs {
 }
 #[derive(StructOpt, Debug)]
 pub struct RemoveArgs {
-    path: String,
+   path: PathBuf,
 
     chunkType: String,
 }
 #[derive(StructOpt, Debug)]
 pub struct PrintArgs {
-    path: String,
+      path: PathBuf,
+
 }
 
 fn main() {
     let args = PngMeArgs::from_args();
     let result =  match args {
-        PngMeArgs::Encode(args) => encode(args.path.as_path(), args.chunkType, args.message).unwrap(),
-        PngMeArgs::Decode(args) => decode(args.path.as_path(), args.chunkType).unwrap(),
+        PngMeArgs::Encode(args) => encode(args.path.as_path(), args.chunkType, args.message),
+        PngMeArgs::Decode(args) => decode(args.path.as_path(), args.chunkType),
         
     
         PngMeArgs::Remove(args) => {
-            println!("{:?}", args);
-            "Wowzers".to_string()
+            remove(args.path.as_path(), args.chunkType)
         }
         PngMeArgs::Print(args) => {
-            println!("{:?}", args);
-            "Wowzers".to_string()
+            print(args.path.as_path())
         }
     };
-    println!("{}", result)
+    println!("{}", result.unwrap())
 }

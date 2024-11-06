@@ -7,16 +7,8 @@ use crate::{
     Error, Result,
 };
 
-/*
-pngme encode ./dice.png ruSt "This is a secret message!
 
-pngme decode ./dice.png ruSt
-
-pngme remove ./dice.png ruSt
-
-pngme print ./dice.png
-*/
-
+//Adds a chunk of type 'chunk_type' to
 pub fn encode(path: &Path, chunk_type: String, message: String) -> Result<String> {
     let mut png = Png::from_file(path)?;
     let chunk = Chunk::new(
@@ -34,4 +26,19 @@ pub fn decode(path: &Path, chunk_type: String) -> Result<String> {
         Some(chunk) => Ok(chunk.data_as_string()?),
         _ => Ok(format!("No chunk with type {} found", chunk_type)),
     }
+}
+
+pub fn remove(path: &Path, chunk_type: String) -> Result<String> {
+    let mut png = Png::from_file(path)?;
+    png.remove_first_chunk(&chunk_type)?;
+    fs::write(path, png.as_bytes())?;
+    Ok(format!("Sucessfully removed first {} chunk", chunk_type))
+}
+pub fn print(path: &Path) -> Result<String> {
+    let png = Png::from_file(path)?;
+    let mut out = "".to_string();
+    for chunk in png.chunks() {
+        out = format!("out \n{}", chunk);
+    }
+    Ok(format!("{}", out))
 }
