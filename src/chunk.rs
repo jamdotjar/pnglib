@@ -53,7 +53,7 @@ impl Chunk {
         &self.chunk_type
     }
 
-    pub fn data(&self) ->&Vec<u8> {
+    pub fn data(&self) -> &Vec<u8> {
         &self.chunk_data
     }
 
@@ -76,11 +76,6 @@ impl Chunk {
     }
 
     /// Returns this chunk as a byte sequences described by the PNG spec.
-    /// The following data is included in this byte sequence in order:
-    /// 1. Length of the data *(4 bytes)*
-    /// 2. Chunk type *(4 bytes)*
-    /// 3. The data itself *(`length` bytes)*
-    /// 4. The CRC of the chunk type and data *(4 bytes)*
     pub fn as_bytes(&self) -> Vec<u8> {
         let data: Vec<u8> = u32::to_be_bytes(self.data_length)
             .iter()
@@ -139,8 +134,8 @@ impl Display for Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "Chunk with length: {}, type: {}, data: {:?}, crc: {}",
-            self.data_length, self.chunk_type, self.chunk_data, self.crc
+            "Chunk with length: {}, type: {}, data: {:?} ({}), crc: {}",
+            self.data_length, self.chunk_type, self.chunk_data, String::from_utf8_lossy(&self.chunk_data), self.crc
         );
         Ok(())
     }
