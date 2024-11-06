@@ -1,6 +1,10 @@
 #![allow(unused_variables)]
-use std::path::PathBuf;
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
+use pngme::{commands::encode, commands::decode, Error};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -14,7 +18,7 @@ pub enum PngMeArgs {
 
 #[derive(StructOpt, Debug)]
 pub struct EncodeArgs {
-    input: String,
+    path: PathBuf,
 
     chunkType: String,
 
@@ -22,34 +26,35 @@ pub struct EncodeArgs {
 }
 #[derive(StructOpt, Debug)]
 pub struct DecodeArgs {
-    input: String,
+    path: PathBuf,
     chunkType: String,
 }
 #[derive(StructOpt, Debug)]
 pub struct RemoveArgs {
-    input: String,
+    path: String,
 
     chunkType: String,
 }
 #[derive(StructOpt, Debug)]
 pub struct PrintArgs {
-    input: String,
+    path: String,
 }
 
 fn main() {
     let args = PngMeArgs::from_args();
-    match args {
-        PngMeArgs::Encode(args) => {
-            println!("{:?}", args)
-        }
-        PngMeArgs::Decode(args) => {
-            println!("{:?}", args)
-        }
+    let result =  match args {
+        PngMeArgs::Encode(args) => encode(args.path.as_path(), args.chunkType, args.message).unwrap(),
+        PngMeArgs::Decode(args) => decode(args.path.as_path(), args.chunkType).unwrap(),
+        
+    
         PngMeArgs::Remove(args) => {
-            println!("{:?}", args)
+            println!("{:?}", args);
+            "Wowzers".to_string()
         }
         PngMeArgs::Print(args) => {
-            println!("{:?}", args)
+            println!("{:?}", args);
+            "Wowzers".to_string()
         }
     };
+    println!("{}", result)
 }

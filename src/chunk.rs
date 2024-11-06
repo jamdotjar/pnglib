@@ -53,8 +53,8 @@ impl Chunk {
         &self.chunk_type
     }
 
-    pub fn data(&self) -> &[u8] {
-        todo!()
+    pub fn data(&self) ->&Vec<u8> {
+        &self.chunk_data
     }
 
     pub fn crc(&self) -> u32 {

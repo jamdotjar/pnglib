@@ -87,7 +87,6 @@ impl TryFrom<&[u8]> for Png {
             return Err(Box::new(std::fmt::Error)); //TODO: better errors
         }
         let chunks = to_chunks(bytes)?;
-        print!("{:?}", chunks);
         let png = Png {
             header: Png::STANDARD_HEADER,
             chunks,
