@@ -1,12 +1,6 @@
 use std::{fs, path::Path, str::FromStr};
 
-use crate::{
-    chunk::{self, Chunk},
-    chunk_type::ChunkType,
-    png::Png,
-    Error, Result,
-};
-
+use crate::{chunk::Chunk, chunk_type::ChunkType, png::Png, Error, Result};
 
 //Adds a chunk of type 'chunk_type' to
 pub fn encode(path: &Path, chunk_type: String, message: String) -> Result<String> {
@@ -22,7 +16,7 @@ pub fn encode(path: &Path, chunk_type: String, message: String) -> Result<String
 pub fn decode(path: &Path, chunk_type: String) -> Result<String> {
     let png = Png::from_file(path)?;
     let chunk = png.chunk_by_type(&*chunk_type);
- match chunk {
+    match chunk {
         Some(chunk) => Ok(chunk.data_as_string()?),
         _ => Ok(format!("No chunk with type {} found", chunk_type)),
     }
